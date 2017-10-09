@@ -28,6 +28,7 @@ class client{
             }
         }
 
+
         try{
             DatagramChannel sc = DatagramChannel.open();
             Console cons = System.console();
@@ -108,7 +109,7 @@ class client{
         }
 
     }
-
+   
     /**
      * Checks validity of user given IP address
      *
