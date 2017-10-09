@@ -14,6 +14,7 @@ import java.nio.file.*;
 
 class server{
     private static final int SWS = 5;
+
     public static SocketAddress client = null;
 
     public static void main(String args[]){
@@ -21,6 +22,7 @@ class server{
         try{
 
             c = DatagramChannel.open();
+
             Console cons = System.console();
 
             //Check for valid port number
@@ -35,6 +37,7 @@ class server{
                     throw new NumberFormatException();
                 }
             }catch(NumberFormatException nfe){
+
                 System.out.println("Port must be a valid integer between 1024 and 65535 Closing program...");
                 return;
             }
@@ -111,5 +114,6 @@ class server{
         }
       return sendFile;
       }
+
     }
 }

@@ -29,9 +29,87 @@ class client{
         }
 
 
+        try{
+            DatagramChannel sc = DatagramChannel.open();
+            Console cons = System.console();
+
+            if(!commands){
+                ip = cons.readLine("Enter IP address: ");
+                if(!validityCheck(ip)){
+                    return;
+                }
+            }
+                //Checks for valid port number
+                try{
+                    port = Integer.parseInt(cons.readLine("Enter port number: "));
+                    if(port < 1024 || port > 65535){
+                    throw new NumberFormatException();
+                    }
+                }catch(NumberFormatException nfe){
+                    System.out.println("Port must be a valid integer between 1024 and 65535. Closing program...");
+                    return;
+                }
+
+                server = new InetSocketAddress(ip, port);
+                DatagramSocket ds = sc.socket();
+
+                while(true){
+                //Read file name from user and make sure it's not empty
+                String fileName = "";
+                while(fileName.equals("")){
+                  fileName = cons.readLine("Enter command or file to send: ");
+                  fileName = fileName.trim();
+                }
+
+
+                String message;
+                ByteBuffer buff = ByteBuffer.allocate(1024);
+                ByteBuffer buffer;
+                switch(fileName){
+                    case "exit":
+                        buffer = ByteBuffer.wrap(fileName.getBytes());
+                        sc.send(buffer, server);
+                        return;
+                    default:
+
+                        //Check that format is correct
+                        if(fileName.charAt(0) != '/'){
+                            System.out.println("File name must start with '/'.");
+                            break;
+                        }
+
+                        buffer = ByteBuffer.wrap(fileName.getBytes());
+                        sc.send(buffer, server);
+
+                        sc.receive(buff);
+                        String code = new String(buff.array());
+                        code = code.trim();
+
+                        if(code.equals("error")){
+                            System.out.println("There was an error retrieving the file");
+                        }else if(code.equals("filenotfound")){
+                            System.out.println("The file was not found.");
+                        }else{
+
+                            //Recieve amount of packets to expect
+                            buffer = ByteBuffer.allocate(1024);
+                            sc.receive(buffer);
+                            String packetString = new String(buffer.array());
+                            sizeString = sizeString.trim();
+                            //print out value for testing
+                            System.out.println(sizeString);
+                            long numPackets = Long.valueOf(sizeString).longValue();
+                            
+                        }
+                }
+            }
+        }catch(IOException e){
+            System.out.println("Server unreachable. Closing program..");
+            return;
+        }
+
     }
-
-
+   
     /**
      * Checks validity of user given IP address
      *
