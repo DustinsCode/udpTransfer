@@ -35,7 +35,7 @@ class client{
 
             if(!commands){
                 ip = cons.readLine("Enter IP address: ");
-                if(!validityCheck(ip)){
+                if(!validitycheck(ip)){
                     return;
                 }
             }
@@ -94,7 +94,7 @@ class client{
                             //Recieve amount of packets to expect
                             buffer = ByteBuffer.allocate(1024);
                             sc.receive(buffer);
-                            String packetString = new String(buffer.array());
+                            String sizeString = new String(buffer.array());
                             sizeString = sizeString.trim();
                             //print out value for testing
                             System.out.println(sizeString);
