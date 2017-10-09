@@ -14,10 +14,13 @@ import java.nio.file.*;
 
 class server{
     private static final int SWS = 5;
+    public static SocketAddress client = null;
 
     public static void main(String args[]){
+      DatagramChannel c;
         try{
-            DatagramChannel c = DatagramChannel.open();
+
+            c = DatagramChannel.open();
             Console cons = System.console();
 
             //Check for valid port number
@@ -32,12 +35,81 @@ class server{
                     throw new NumberFormatException();
                 }
             }catch(NumberFormatException nfe){
-                System.out.println("Port must be a valid integer between 1024 and 65535 Closing program..");
+                System.out.println("Port must be a valid integer between 1024 and 65535 Closing program...");
                 return;
             }
 
+            while(true){
+
+              //Buffer for the name of the file requested by the client.
+              ByteBuffer fileNameBuf = ByteBuffer.allocate(1024);
+              client = c.receive(fileNameBuf);
+              String fileName = new String(fileNameBuf.array());
+              fileName = fileName.trim();
+              fileName = fileName.substring(1,fileName.length());
+
+              //Search for the file in the directory of the server.
+              File clientFile = findFile(fileName);
+
+
+              if (clientFile == null){
+                System.out.println("File not found on the server.");
+                ByteBuffer errorBuf = ByteBuffer.wrap("filenotfound".getBytes());
+                c.send(errorBuf, client);
+              }
+              else{
+                //Get the size of the file
+                int fileSize = (int)clientFile.length();
+                //Get the total number of packets to send to the client.
+                int numPackets;
+                if (fileSize % 1024 == 0)
+                  numPackets = fileSize / 1024;
+                else
+                  numPackets = (fileSize / 1024) + 1;
+
+                String tempPacketString = numPackets + "";
+                ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
+                c.send(numPacketsBuf, client);
+
+                boolean[] packetArray = new boolean[numPackets];
+                for (int i = 0; i < numPackets; i++){
+                  packetArray[i] = false;
+                }
+
+
+
+              }
+
+
+
+            }
         }catch(IOException e){
             System.out.println("Got an io exception ya dingus");
+
         }
+    }
+
+
+  //Return the file the user searched for.
+  public static File findFile(String type){
+      File sendFile = null;
+      File dir = new File(server.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+      String newType = type.trim();
+
+      File[] matches = dir.listFiles(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          return name.startsWith(newType);
+        }
+      });
+
+      if (matches.length < 1)
+        return null;
+      else{
+        for(int i = 0; i < matches.length; i++){
+          //System.out.println(matches[i]);
+          sendFile = matches[0];
+        }
+      return sendFile;
+      }
     }
 }
