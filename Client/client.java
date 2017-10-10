@@ -127,7 +127,20 @@ class client{
             System.out.println("An IO exception has occurred.");
             return;
         }
+    }
 
+    /**
+     * Retreive packet and return sequence number
+     *
+     * @return sequence number
+     * */
+    public static int receive(FileChannel fc, DatagramSocket ds ){
+        return 0;
+
+    }
+
+    public static void sendAck(){
+        return;
     }
 
     /**
