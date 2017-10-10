@@ -79,6 +79,16 @@ class server{
                   packetArray[i] = false;
                 }
 
+                //Convert number of packets into byteArray
+                //Feel free to move this wherever we end up needing it.
+                byte[] b = new byte[3];
+                byte b3 = (byte)(numPackets & 0xFF);
+                byte b2 = (byte)((numPackets >> 8) & 0xFF);
+                byte b1 = (byte)((numPackets >> 16)&0xFF);
+                b[0] = b1;
+                b[1] = b2;
+                b[2] = b3;
+
 
 
               }

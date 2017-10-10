@@ -28,7 +28,6 @@ class client{
             }
         }
 
-
         try{
             DatagramChannel sc = DatagramChannel.open();
             Console cons = System.console();
@@ -90,26 +89,47 @@ class client{
                         }else if(code.equals("filenotfound")){
                             System.out.println("The file was not found.");
                         }else{
+                            try{
+                                //Receive amount of packets to expect
+                                buffer = ByteBuffer.allocate(1024);
+                                sc.receive(buffer);
+                                String sizeString = new String(buffer.array());
+                                sizeString = sizeString.trim();
+                                //print out value for testing
+                                System.out.println(sizeString);
+                                long numPackets = Long.valueOf(sizeString).longValue();
 
-                            //Recieve amount of packets to expect
-                            buffer = ByteBuffer.allocate(1024);
-                            sc.receive(buffer);
-                            String sizeString = new String(buffer.array());
-                            sizeString = sizeString.trim();
-                            //print out value for testing
-                            System.out.println(sizeString);
-                            long numPackets = Long.valueOf(sizeString).longValue();
-                            
+                                //create new file
+                                File f = new File(fileName.substring(1);
+                                FileChannel fc = new FileOutoutStream(f, false).getChannel();
+
+                                DatagramPacket[] packetArray = new DatagramPacket[5];
+                                int packetsRecd = 0;
+
+                                //Start retrieving file and stuff
+                                while(packetsRecd < numPackets){
+                                    DatagramPacket packet = ds.receive();
+                                    byte[] data = packet.getData();
+
+                                    //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
+                                    int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);;
+
+                                }
+
+
+                            }catch(NumberFormatException nfe){
+                                System.out.println("NumberFormatException occurred");
+                            }
                         }
                 }
             }
         }catch(IOException e){
-            System.out.println("Server unreachable. Closing program..");
+            System.out.println("An IO exception has occurred.");
             return;
         }
 
     }
-   
+
     /**
      * Checks validity of user given IP address
      *
