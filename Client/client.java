@@ -99,23 +99,7 @@ class client{
                                 System.out.println(sizeString);
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                //create new file
-                                File f = new File(fileName.substring(1);
-                                FileChannel fc = new FileOutoutStream(f, false).getChannel();
-
-                                DatagramPacket[] packetArray = new DatagramPacket[5];
-                                int packetsRecd = 0;
-
-                                //Start retrieving file and stuff
-                                while(packetsRecd < numPackets){
-                                    DatagramPacket packet = ds.receive();
-                                    byte[] data = packet.getData();
-
-                                    //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
-                                    int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);;
-
-                                }
-
+                                receive(ds, fileName, numPackets);
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
@@ -129,13 +113,43 @@ class client{
         }
     }
 
-    /**
+    /***********
      * Retreive packet and return sequence number
      *
      * @return sequence number
-     * */
-    public static int receive(FileChannel fc, DatagramSocket ds ){
-        return 0;
+     * **********/
+    public static void receive(DatagramSocket ds, String fileName, int numPackets){
+
+        //create new file
+        File f = new File(fileName.substring(1);
+        FileChannel fc = new FileOutoutStream(f, false).getChannel();
+
+        DatagramPacket[] packetArray = new DatagramPacket[5];
+        int packetsRecd = 0;
+
+        bool[] arrived = new bool[numPackets];
+        Arrays.fill(arrived, false);
+
+        int curr = 4;
+
+
+        //Start retrieving file and stuff
+        while(packetsRecd < numPackets){
+            DatagramPacket packet = ds.receive();
+            packetsRecd ++;
+            byte[] data = packet.getData();
+
+            //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
+            int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+
+            //If packet not already There
+            if(!arrived[sequenceNum]){
+                arrived[sequenceNum] = true;
+
+            }
+
+
+        }
 
     }
 
@@ -146,7 +160,7 @@ class client{
     /**
      * Checks validity of user given IP address
      *
-     * @param ip user tyuped IP address\
+     * @param ip user typed IP address\
      * @return true if valid, false if not
      * */
     public static boolean validitycheck(String ip){
