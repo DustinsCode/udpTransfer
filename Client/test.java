@@ -8,7 +8,7 @@ import java.util.*;
 class test{
     public static void main(String[] args){
         byte[] b = new byte[3];
-        int yes = 999999;
+        int yes = 1234567;
         byte b3 = (byte)(yes & 0xFF);
         byte b2 = (byte)((yes >> 8) & 0xFF);
         byte b1 = (byte)((yes >> 16)&0xFF);

@@ -89,11 +89,7 @@ class server{
                 b[1] = b2;
                 b[2] = b3;
 
-
-
               }
-
-
 
             }
         }catch(IOException e){

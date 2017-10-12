@@ -2,9 +2,12 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.util.*;
 
 class client{
+
     private static final int SWS = 5;
+    private static final int TIMEOUT = 3000;
 
     public static void main(String[] args){
         String ip = "";
@@ -42,7 +45,7 @@ class client{
                 try{
                     port = Integer.parseInt(cons.readLine("Enter port number: "));
                     if(port < 1024 || port > 65535){
-                    throw new NumberFormatException();
+                        throw new NumberFormatException();
                     }
                 }catch(NumberFormatException nfe){
                     System.out.println("Port must be a valid integer between 1024 and 65535. Closing program...");
@@ -105,6 +108,7 @@ class client{
                                 System.out.println("NumberFormatException occurred");
                             }
                         }
+                        break;
                 }
             }
         }catch(IOException e){
@@ -120,18 +124,25 @@ class client{
      * **********/
     public static void receive(DatagramSocket ds, String fileName, int numPackets){
 
+        ds.setSoTimeout(TIMEOUT);
+
         //create new file
-        File f = new File(fileName.substring(1);
-        FileChannel fc = new FileOutoutStream(f, false).getChannel();
+        File f = new File(fileName.substring(1));
+
+        //TODO: HANDLE TRUE PARAMETER HERE LATER.
+        //     CHECK IF FILE ALREADY EXISTS
+        FileChannel fc = new FileOutputStream(f, true).getChannel();
 
         DatagramPacket[] packetArray = new DatagramPacket[5];
         int packetsRecd = 0;
 
-        bool[] arrived = new bool[numPackets];
+        boolean[] arrived = new boolean[numPackets];
         Arrays.fill(arrived, false);
 
         int curr = 4;
 
+        //Store sequence nums to send acks
+        ArrayList<Integer>  seqNums = new ArrayList<Integer>();
 
         //Start retrieving file and stuff
         while(packetsRecd < numPackets){
@@ -142,18 +153,37 @@ class client{
             //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
             int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
 
-            //If packet not already There
+            //If packet not already There, put data into filechannel
+            //else, something
             if(!arrived[sequenceNum]){
                 arrived[sequenceNum] = true;
 
+                //send acknowledgments
+                while(!seqNums.isEmpty()){
+                    sendAck(ds, seqNums.get(0));
+                    seqNums.remove(0);
+                }
             }
-
-
         }
-
     }
 
-    public static void sendAck(){
+    public static void sendAck(DatagramSocket ds, int seqNum){
+
+
+        byte[] b = new byte[3];
+
+        //Convert number of packets into byteArray
+        //Feel free to move this wherever we end up needing it.
+        byte[] b = new byte[3];
+        byte b3 = (byte)(seqNum & 0xFF);
+        byte b2 = (byte)((s >> 8) & 0xFF);
+        byte b1 = (byte)((numPackets >> 16)&0xFF);
+        b[0] = b1;
+        b[1] = b2;
+        b[2] = b3;
+        DatagramPacket p = new DatagramPacket(b, 3);
+        ds.send(p);
+
         return;
     }
 
