@@ -26,6 +26,8 @@ class server{
 
             Console cons = System.console();
 
+            DatagramSocket ds = c.socket();
+
             //Check for valid port number
             try{
                 int port = 0;
@@ -78,22 +80,38 @@ class server{
                 boolean[] packetArray = new boolean[numPackets];
                 Arrays.fill(packetArray, false);
 
-                //Convert number of packets into byteArray
-                //Feel free to move this wherever we end up needing it.
-                byte[] b = new byte[3];
-                byte b3 = (byte)(numPackets & 0xFF);
-                byte b2 = (byte)((numPackets >> 8) & 0xFF);
-                byte b1 = (byte)((numPackets >> 16)&0xFF);
-                b[0] = b1;
-                b[1] = b2;
-                b[2] = b3;
-
+                FileInputStream fis = new FileInputStream(clientFile);
+                BufferedInputStream bis = new BufferedInputStream(fis);
+                int bytesSent = 0;
+                int bytesToSend = 0;
                 int numSent = 0;
+
                 while (numSent < numPackets){
                   int count = 0;
+                  
                   while (count < 5){
+                    if (fileSize - bytesSent < 1024)
+                      bytesToSend = fileSize - bytesSent;
+                    else
+                      bytesToSend = 1024;
+
+                    int tempNumSent = numSent;
+                    byte[] sendBytes = new byte[bytesToSend + 3];
+                    byte b3 = (byte)(tempNumSent & 0xFF);
+                    byte b2 = (byte)((tempNumSent >> 8) & 0xFF);
+                    byte b1 = (byte)((tempNumSent >> 16)&0xFF);
+                    sendBytes[0] = b1;
+                    sendBytes[1] = b2;
+                    sendBytes[2] = b3;
+
+                    bis.read(sendBytes, 3, bytesToSend);
+
+                    DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3);
+                    ds.send(d);
+
+                    bytesSent += 1024;
+                    numSent++;
                     count++;
-                    DatagramPacket d = new DatagramPacket();
                   }
                 }
 
