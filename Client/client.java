@@ -3,6 +3,7 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
+import static java.lang.Math.toIntExact;
 
 class client{
 
@@ -102,7 +103,7 @@ class client{
                                 System.out.println(sizeString);
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, numPackets);
+                                receive(ds, fileName, toIntExact(numPackets));
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
@@ -132,31 +133,61 @@ class client{
         //TODO: HANDLE TRUE PARAMETER HERE LATER.
         //     CHECK IF FILE ALREADY EXISTS
         FileChannel fc = new FileOutputStream(f, true).getChannel();
+        ByteBuffer fileBuff;
 
-        DatagramPacket[] packetArray = new DatagramPacket[5];
+        ArrayList<DatagramPacket> packetArray = new ArrayList<DatagramPacket>();
         int packetsRecd = 0;
 
         boolean[] arrived = new boolean[numPackets];
         Arrays.fill(arrived, false);
 
-        int curr = 4;
+        int lastRecd = -1;
+        int index = 0;
 
         //Store sequence nums to send acks
         ArrayList<Integer>  seqNums = new ArrayList<Integer>();
 
         //Start retrieving file and stuff
         while(packetsRecd < numPackets){
-            DatagramPacket packet = ds.receive();
+            DatagramPacket packet = new DatagramPacket(new byte[1027], 1027);
+            ds.receive(packet);
+            packetArray.add(packet);
             packetsRecd ++;
             byte[] data = packet.getData();
 
             //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
             int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+            seqNums.add(sequenceNum);
 
             //If packet not already There, put data into filechannel
             //else, something
             if(!arrived[sequenceNum]){
                 arrived[sequenceNum] = true;
+
+                int iterate = 0;
+                while(!packetArray.isEmpty() && iterate < 5){
+                    if(sequenceNum == lastRecd+1){
+                        packetsRecd++;
+                        lastRecd = sequenceNum;
+                        fileBuff = ByteBuffer.allocate(packetArray.get(index).getLength()-3);
+                        fileBuff = ByteBuffer.wrap(packetArray.get(index).getData(), 3, packetArray.get(index).getLength()-3);
+                        fc.write(fileBuff);
+                        packetArray.remove(index);
+
+                        if(packetArray.isEmpty()){
+                            break;
+                        }
+                    }
+
+                    for(int i = 0; i < packetArray.size(); i++){
+                        data = packetArray.get(i).getData();
+                        sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+                        if(sequenceNum == lastRecd+1){
+                            index = i;
+                        }
+                    }
+                    iterate++;
+                }
 
                 //send acknowledgments
                 while(!seqNums.isEmpty()){
@@ -169,15 +200,12 @@ class client{
 
     public static void sendAck(DatagramSocket ds, int seqNum){
 
-
-        byte[] b = new byte[3];
-
         //Convert number of packets into byteArray
         //Feel free to move this wherever we end up needing it.
         byte[] b = new byte[3];
         byte b3 = (byte)(seqNum & 0xFF);
-        byte b2 = (byte)((s >> 8) & 0xFF);
-        byte b1 = (byte)((numPackets >> 16)&0xFF);
+        byte b2 = (byte)((seqNum >> 8) & 0xFF);
+        byte b1 = (byte)((seqNum >> 16)&0xFF);
         b[0] = b1;
         b[1] = b2;
         b[2] = b3;
