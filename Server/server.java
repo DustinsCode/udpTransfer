@@ -98,10 +98,7 @@ class server{
                 }
 
 
-
               }
-
-
 
             }
         }catch(IOException e){
