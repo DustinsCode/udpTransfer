@@ -4,6 +4,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.nio.file.Path.*;
 import java.nio.file.*;
+import java.util.*;
 
 /**
  * UDP File Transfer Project
@@ -75,9 +76,7 @@ class server{
                 c.send(numPacketsBuf, client);
 
                 boolean[] packetArray = new boolean[numPackets];
-                for (int i = 0; i < numPackets; i++){
-                  packetArray[i] = false;
-                }
+                Arrays.fill(packetArray, false);
 
                 //Convert number of packets into byteArray
                 //Feel free to move this wherever we end up needing it.
@@ -89,6 +88,16 @@ class server{
                 b[1] = b2;
                 b[2] = b3;
 
+                int numSent = 0;
+                while (numSent < numPackets){
+                  int count = 0;
+                  while (count < 5){
+                    count++;
+                    DatagramPacket d = new DatagramPacket();
+                  }
+                }
+
+
               }
 
             }
@@ -99,8 +108,8 @@ class server{
     }
 
 
-  //Return the file the user searched for.
-  public static File findFile(String type){
+    //Return the file the user searched for.
+    public static File findFile(String type){
       File sendFile = null;
       File dir = new File(server.class.getProtectionDomain().getCodeSource().getLocation().getPath());
       String newType = type.trim();
@@ -112,14 +121,14 @@ class server{
       });
 
       if (matches.length < 1)
-        return null;
+      return null;
       else{
         for(int i = 0; i < matches.length; i++){
           //System.out.println(matches[i]);
           sendFile = matches[0];
         }
-      return sendFile;
+        return sendFile;
       }
 
     }
-}
+  }
