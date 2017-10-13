@@ -110,6 +110,7 @@ class server{
 
                 }
               }
+
             }
         }catch(IOException e){
             System.out.println("Got an io exception ya dingus");

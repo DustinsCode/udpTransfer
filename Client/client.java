@@ -2,9 +2,13 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.util.*;
+import static java.lang.Math.toIntExact;
 
 class client{
+
     private static final int SWS = 5;
+    private static final int TIMEOUT = 3000;
 
     public static void main(String[] args){
         String ip = "";
@@ -42,7 +46,7 @@ class client{
                 try{
                     port = Integer.parseInt(cons.readLine("Enter port number: "));
                     if(port < 1024 || port > 65535){
-                    throw new NumberFormatException();
+                        throw new NumberFormatException();
                     }
                 }catch(NumberFormatException nfe){
                     System.out.println("Port must be a valid integer between 1024 and 65535. Closing program...");
@@ -59,7 +63,6 @@ class client{
                   fileName = cons.readLine("Enter command or file to send: ");
                   fileName = fileName.trim();
                 }
-
 
                 String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
@@ -93,18 +96,20 @@ class client{
                                 //Receive amount of packets to expect
                                 buffer = ByteBuffer.allocate(1024);
                                 sc.receive(buffer);
+                                System.out.println("Packet Received");
                                 String sizeString = new String(buffer.array());
                                 sizeString = sizeString.trim();
                                 //print out value for testing
                                 System.out.println(sizeString);
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, numPackets);
+                                receive(ds, fileName, toIntExact(numPackets));
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
                             }
                         }
+                        break;
                 }
             }
         }catch(IOException e){
@@ -118,42 +123,97 @@ class client{
      *
      * @return sequence number
      * **********/
-    public static void receive(DatagramSocket ds, String fileName, int numPackets){
+    public static void receive(DatagramSocket ds, String fileName, int numPackets) throws IOException{
+
+        ds.setSoTimeout(TIMEOUT);
 
         //create new file
-        File f = new File(fileName.substring(1);
-        FileChannel fc = new FileOutoutStream(f, false).getChannel();
+        File f = new File(fileName.substring(1));
 
-        DatagramPacket[] packetArray = new DatagramPacket[5];
+        //TODO: HANDLE TRUE PARAMETER HERE LATER.
+        //     CHECK IF FILE ALREADY EXISTS
+        FileChannel fc = null;
+        try{
+            fc = new FileOutputStream(f, true).getChannel();
+        }catch(FileNotFoundException fnfe){
+            System.out.println("File not found");
+        }
+        ByteBuffer fileBuff;
+
+        ArrayList<DatagramPacket> packetArray = new ArrayList<DatagramPacket>();
         int packetsRecd = 0;
 
-        bool[] arrived = new bool[numPackets];
+        boolean[] arrived = new boolean[numPackets];
         Arrays.fill(arrived, false);
 
-        int curr = 4;
+        int lastRecd = -1;
+        int index = 0;
 
+        //Store sequence nums to send acks
+        ArrayList<Integer>  seqNums = new ArrayList<Integer>();
 
         //Start retrieving file and stuff
         while(packetsRecd < numPackets){
-            DatagramPacket packet = ds.receive();
-            packetsRecd ++;
-            byte[] data = packet.getData();
+            try{
+                DatagramPacket packet = null;
+                ds.receive(packet);
+                packetArray.add(packet);
+                packetsRecd ++;
+                byte[] data = packet.getData();
 
-            //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
-            int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+                //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
+                int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+                seqNums.add(sequenceNum);
 
-            //If packet not already There
-            if(!arrived[sequenceNum]){
-                arrived[sequenceNum] = true;
+                //If packet not already There, put data into filechannel
+                //else, something
+                if(!arrived[sequenceNum]){
+                    arrived[sequenceNum] = true;
 
+                    int iterate = 0;
+                    while(!packetArray.isEmpty() && iterate < 5){
+                        if(sequenceNum == lastRecd+1){
+                            packetsRecd++;
+                            lastRecd = sequenceNum;
+                            fileBuff = ByteBuffer.allocate(packetArray.get(index).getLength()-3);
+                            fileBuff = ByteBuffer.wrap(packetArray.get(index).getData(), 3, packetArray.get(index).getLength()-3);
+                            fc.write(fileBuff);
+                            packetArray.remove(index);
+
+                            if(packetArray.isEmpty()){
+                                break;
+                            }
+                        }
+
+                        for(int i = 0; i < packetArray.size(); i++){
+                            data = packetArray.get(i).getData();
+                            sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+                            if(sequenceNum == lastRecd+1){
+                                index = i;
+                            }
+                        }
+                        iterate++;
+                    }
+
+                    //send acknowledgments
+                    while(!seqNums.isEmpty()){
+                        sendAck(ds, seqNums.get(0));
+                        seqNums.remove(0);
+                    }
+                }
+            }catch(SocketTimeoutException ste){
+                System.out.println("Receive Timed Out");
             }
-
-
         }
-
+        fc.close();
     }
 
-    public static void sendAck(){
+    public static void sendAck(DatagramSocket ds, int seqNum) throws IOException{
+
+        String ackNum = "" + seqNum;
+        DatagramPacket p = new DatagramPacket(ackNum.getBytes(), 3);
+        ds.send(p);
+
         return;
     }
 
