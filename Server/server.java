@@ -15,18 +15,26 @@ import java.util.*;
 
 class server{
     private static final int SWS = 5;
-
     public static SocketAddress client = null;
+    public static DatagramChannel c;
+    public static DatagramSocket ds;
+    public static int fileSize;
+    public static int numPackets, bytesSent, bytesToSend, numSent;
+    public static boolean[] packetBoolArray;
+    public static DatagramPacket[] packetArray;
+    public static FileInputStream fis;
+    public static BufferedInputStream bis;
 
     public static void main(String args[]){
-      DatagramChannel c;
+
         try{
 
             c = DatagramChannel.open();
 
             Console cons = System.console();
 
-            DatagramSocket ds = c.socket();
+            ds = c.socket();
+            ds.setSoTimeout(10000);
 
             //Check for valid port number
             try{
@@ -65,9 +73,9 @@ class server{
               }
               else{
                 //Get the size of the file
-                int fileSize = (int)clientFile.length();
+                fileSize = (int)clientFile.length();
                 //Get the total number of packets to send to the client.
-                int numPackets;
+
                 if (fileSize % 1024 == 0)
                   numPackets = fileSize / 1024;
                 else
@@ -77,45 +85,30 @@ class server{
                 ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
                 c.send(numPacketsBuf, client);
 
-                boolean[] packetArray = new boolean[numPackets];
-                Arrays.fill(packetArray, false);
+                packetBoolArray = new boolean[numPackets];
+                Arrays.fill(packetBoolArray, false);
+                packetArray = new DatagramPacket[numPackets];
+                Arrays.fill(packetArray, null);
 
-                FileInputStream fis = new FileInputStream(clientFile);
-                BufferedInputStream bis = new BufferedInputStream(fis);
-                int bytesSent = 0;
-                int bytesToSend = 0;
-                int numSent = 0;
+                fis = new FileInputStream(clientFile);
+                bis = new BufferedInputStream(fis);
+                bytesSent = 0;
+                bytesToSend = 0;
+                numSent = 0;
+                boolean missing = false;
 
                 while (numSent < numPackets){
-                  int count = 0;
-                  
-                  while (count < 5){
-                    if (fileSize - bytesSent < 1024)
-                      bytesToSend = fileSize - bytesSent;
-                    else
-                      bytesToSend = 1024;
+                  if (!missing)
+                    sendStandard();
+                  else
+                    sendMissing();
 
-                    int tempNumSent = numSent;
-                    byte[] sendBytes = new byte[bytesToSend + 3];
-                    byte b3 = (byte)(tempNumSent & 0xFF);
-                    byte b2 = (byte)((tempNumSent >> 8) & 0xFF);
-                    byte b1 = (byte)((tempNumSent >> 16)&0xFF);
-                    sendBytes[0] = b1;
-                    sendBytes[1] = b2;
-                    sendBytes[2] = b3;
+                  ArrayList<Integer> ackArray = getAck();
+                  setNulls(ackArray, packetArray);
 
-                    bis.read(sendBytes, 3, bytesToSend);
+                  missing = isEmpty(packetArray);
 
-                    DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3);
-                    ds.send(d);
-
-                    bytesSent += 1024;
-                    numSent++;
-                    count++;
-                  }
                 }
-
-
               }
 
             }
@@ -123,6 +116,89 @@ class server{
             System.out.println("Got an io exception ya dingus");
 
         }
+    }
+
+    public static void sendMissing() throws IOException{
+      for (int i = 0; i < packetArray.length; i++){
+        int indexToSend;
+        if (packetArray[i] != null){
+          indexToSend = i;
+          ds.send(packetArray[indexToSend]);
+        }
+      }
+      //ds.send(packetArray[indexToSend]);
+    }
+
+    public static void sendStandard(){
+      int count = 0;
+
+      try{
+        while (count < 5){
+          if (fileSize - bytesSent < 1024)
+          bytesToSend = fileSize - bytesSent;
+          else
+          bytesToSend = 1024;
+
+          int tempNumSent = numSent;
+          byte[] sendBytes = new byte[bytesToSend + 3];
+          byte b3 = (byte)(tempNumSent & 0xFF);
+          byte b2 = (byte)((tempNumSent >> 8) & 0xFF);
+          byte b1 = (byte)((tempNumSent >> 16)&0xFF);
+          sendBytes[0] = b1;
+          sendBytes[1] = b2;
+          sendBytes[2] = b3;
+
+          bis.read(sendBytes, 3, bytesToSend);
+
+          DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3);
+          ds.send(d);
+          System.out.println("Packet sent.");
+          packetArray[numSent] = d;
+
+          bytesSent += 1024;
+          numSent++;
+          count++;
+        }
+      }
+      catch(IOException e){
+        System.out.println("IOException!");
+      }
+
+    }
+
+
+
+    public static ArrayList<Integer> getAck() throws IOException{
+      int count = 0;
+      ArrayList<Integer> ackArray = new ArrayList<>();
+      while (count < 5){
+        DatagramPacket tempPacket = null;
+        try{
+          ds.receive(tempPacket);
+          String tempString = new String(tempPacket.getData());
+          tempString = tempString.trim();
+          int tempNum = Integer.parseInt(tempString);
+          ackArray.add(tempNum);
+        }
+        catch(SocketTimeoutException e){
+          System.out.println("timed out");
+        }
+      }
+      return ackArray;
+    }
+
+    public static void setNulls(ArrayList<Integer> arr, DatagramPacket[] packets){
+      for (int i : arr){
+        packets[i] = null;
+      }
+    }
+
+    public static boolean isEmpty(DatagramPacket[] packets){
+      for (int i = 0; i < packets.length; i++){
+        if (packets[i] != null)
+          return false;
+      }
+      return true;
     }
 
 
