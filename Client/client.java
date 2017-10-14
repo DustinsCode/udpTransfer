@@ -41,7 +41,7 @@ class client{
                 if(!validitycheck(ip)){
                     return;
                 }
-            }
+            
                 //Checks for valid port number
                 try{
                     port = Integer.parseInt(cons.readLine("Enter port number: "));
@@ -52,7 +52,7 @@ class client{
                     System.out.println("Port must be a valid integer between 1024 and 65535. Closing program...");
                     return;
                 }
-
+            }
                 server = new InetSocketAddress(ip, port);
                 DatagramSocket ds = sc.socket();
 
@@ -63,7 +63,7 @@ class client{
                   fileName = cons.readLine("Enter command or file to send: ");
                   fileName = fileName.trim();
                 }
-
+                
                 String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
                 ByteBuffer buffer;
@@ -82,10 +82,12 @@ class client{
 
                         buffer = ByteBuffer.wrap(fileName.getBytes());
                         sc.send(buffer, server);
+                        System.out.println("Sent file name");
 
                         sc.receive(buff);
                         String code = new String(buff.array());
                         code = code.trim();
+                        System.out.println(code);
 
                         if(code.equals("error")){
                             System.out.println("There was an error retrieving the file");
@@ -94,16 +96,16 @@ class client{
                         }else{
                             try{
                                 //Receive amount of packets to expect
-                                buffer = ByteBuffer.allocate(1024);
-                                sc.receive(buffer);
-                                System.out.println("Packet Received");
-                                String sizeString = new String(buffer.array());
-                                sizeString = sizeString.trim();
+                                //buffer = ByteBuffer.allocate(1024);
+                                //sc.receive(buffer);
+                                //System.out.println("Packet Received");
+                                //String sizeString = new String(buffer.array());
+                                String sizeString = code;
+
                                 //print out value for testing
-                                System.out.println(sizeString);
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, toIntExact(numPackets));
+                                receive(ds, fileName, toIntExact(numPackets), server);
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
@@ -123,7 +125,7 @@ class client{
      *
      * @return sequence number
      * **********/
-    public static void receive(DatagramSocket ds, String fileName, int numPackets) throws IOException{
+    public static void receive(DatagramSocket ds, String fileName, int numPackets, InetSocketAddress server) throws IOException{
 
         ds.setSoTimeout(TIMEOUT);
 
@@ -140,7 +142,7 @@ class client{
         }
         ByteBuffer fileBuff;
 
-        ArrayList<DatagramPacket> packetArray = new ArrayList<DatagramPacket>();
+        ArrayList<DatagramPacket> packetArray = new ArrayList<>();
         int packetsRecd = 0;
 
         boolean[] arrived = new boolean[numPackets];
@@ -155,7 +157,7 @@ class client{
         //Start retrieving file and stuff
         while(packetsRecd < numPackets){
             try{
-                DatagramPacket packet = null;
+                DatagramPacket packet = new DatagramPacket(new byte[1027], 1027);
                 ds.receive(packet);
                 packetArray.add(packet);
                 packetsRecd ++;
@@ -166,7 +168,7 @@ class client{
                 seqNums.add(sequenceNum);
 
                 //If packet not already There, put data into filechannel
-                //else, something
+                //else, otherwise, throws away packet and will resend ack
                 if(!arrived[sequenceNum]){
                     arrived[sequenceNum] = true;
 
@@ -197,7 +199,7 @@ class client{
 
                     //send acknowledgments
                     while(!seqNums.isEmpty()){
-                        sendAck(ds, seqNums.get(0));
+                        sendAck(ds, seqNums.get(0), server);
                         seqNums.remove(0);
                     }
                 }
@@ -208,10 +210,11 @@ class client{
         fc.close();
     }
 
-    public static void sendAck(DatagramSocket ds, int seqNum) throws IOException{
+    public static void sendAck(DatagramSocket ds, int seqNum, InetSocketAddress server) throws IOException{
 
         String ackNum = "" + seqNum;
-        DatagramPacket p = new DatagramPacket(ackNum.getBytes(), 3);
+
+        DatagramPacket p = new DatagramPacket(ackNum.getBytes(), ackNum.getBytes().length, server);
         ds.send(p);
 
         return;

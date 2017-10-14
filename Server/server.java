@@ -34,7 +34,7 @@ class server{
             Console cons = System.console();
 
             ds = c.socket();
-            ds.setSoTimeout(10000);
+            ds.setSoTimeout(2000);
 
             //Check for valid port number
             try{
@@ -47,6 +47,7 @@ class server{
                 if(port < 1024 || port > 65535){
                     throw new NumberFormatException();
                 }
+                c.bind(new InetSocketAddress(port));
             }catch(NumberFormatException nfe){
 
                 System.out.println("Port must be a valid integer between 1024 and 65535 Closing program...");
@@ -60,6 +61,8 @@ class server{
               client = c.receive(fileNameBuf);
               String fileName = new String(fileNameBuf.array());
               fileName = fileName.trim();
+
+              System.out.println("Client wants: " + fileName);
               fileName = fileName.substring(1,fileName.length());
 
               //Search for the file in the directory of the server.
@@ -95,18 +98,18 @@ class server{
                 bytesSent = 0;
                 bytesToSend = 0;
                 numSent = 0;
-                boolean missing = false;
+                boolean empty = true;
 
                 while (numSent < numPackets){
-                  if (!missing)
-                    sendStandard();
+                  if (empty)
+                    sendStandard(ds);
                   else
                     sendMissing();
 
                   ArrayList<Integer> ackArray = getAck();
                   setNulls(ackArray, packetArray);
 
-                  missing = isEmpty(packetArray);
+                  empty = isEmpty(packetArray);
 
                 }
               }
@@ -129,7 +132,7 @@ class server{
       //ds.send(packetArray[indexToSend]);
     }
 
-    public static void sendStandard(){
+    public static void sendStandard(DatagramSocket ds){
       int count = 0;
 
       try{
@@ -139,6 +142,9 @@ class server{
           else
           bytesToSend = 1024;
 
+          if(bytesToSend < 0){
+            break;
+          }
           int tempNumSent = numSent;
           byte[] sendBytes = new byte[bytesToSend + 3];
           byte b3 = (byte)(tempNumSent & 0xFF);
@@ -150,7 +156,7 @@ class server{
 
           bis.read(sendBytes, 3, bytesToSend);
 
-          DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3);
+          DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3, client);
           ds.send(d);
           System.out.println("Packet sent.");
           packetArray[numSent] = d;
@@ -158,6 +164,10 @@ class server{
           bytesSent += 1024;
           numSent++;
           count++;
+
+          if(numSent > numPackets){
+            break;
+          }
         }
       }
       catch(IOException e){
@@ -172,7 +182,7 @@ class server{
       int count = 0;
       ArrayList<Integer> ackArray = new ArrayList<>();
       while (count < 5){
-        DatagramPacket tempPacket = null;
+        DatagramPacket tempPacket = new DatagramPacket(new byte[1024], 1024);
         try{
           ds.receive(tempPacket);
           String tempString = new String(tempPacket.getData());
