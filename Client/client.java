@@ -5,9 +5,16 @@ import java.nio.channels.*;
 import java.util.*;
 import static java.lang.Math.toIntExact;
 
+
+/**
+ * UDP File Transfer Project
+ * 
+ * @author Dustin Thurston
+ * @author Ryan Walt
+ */
 class client{
 
-    private static final int SWS = 5;
+    //private static final int SWS = 5;
     private static final int TIMEOUT = 3000;
 
     public static void main(String[] args){
@@ -56,7 +63,7 @@ class client{
                 server = new InetSocketAddress(ip, port);
                 DatagramSocket ds = sc.socket();
 
-                while(true){
+                
                 //Read file name from user and make sure it's not empty
                 String fileName = "";
                 while(fileName.equals("")){
@@ -64,7 +71,7 @@ class client{
                   fileName = fileName.trim();
                 }
                 
-                String message;
+                //String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
                 ByteBuffer buffer;
                 switch(fileName){
@@ -113,7 +120,7 @@ class client{
                         }
                         break;
                 }
-            }
+            
         }catch(IOException e){
             System.out.println("An IO exception has occurred.");
             return;
@@ -159,8 +166,9 @@ class client{
             try{
                 DatagramPacket packet = new DatagramPacket(new byte[1027], 1027);
                 ds.receive(packet);
+                System.out.println("Packet Received");
                 packetArray.add(packet);
-                packetsRecd ++;
+                //packetsRecd ++;
                 byte[] data = packet.getData();
 
                 //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
@@ -216,7 +224,7 @@ class client{
 
         DatagramPacket p = new DatagramPacket(ackNum.getBytes(), ackNum.getBytes().length, server);
         ds.send(p);
-
+        System.out.println("Ack sent");
         return;
     }
 
