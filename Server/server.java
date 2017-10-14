@@ -14,7 +14,7 @@ import java.util.*;
  * */
 
 class server{
-    private static final int SWS = 5;
+    private static final int TIMEOUT = 3000;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
@@ -34,7 +34,7 @@ class server{
             Console cons = System.console();
 
             ds = c.socket();
-            ds.setSoTimeout(2000);
+            
 
             //Check for valid port number
             try{
@@ -61,13 +61,11 @@ class server{
               client = c.receive(fileNameBuf);
               String fileName = new String(fileNameBuf.array());
               fileName = fileName.trim();
-
               System.out.println("Client wants: " + fileName);
               fileName = fileName.substring(1,fileName.length());
 
               //Search for the file in the directory of the server.
               File clientFile = findFile(fileName);
-
 
               if (clientFile == null){
                 System.out.println("File not found on the server.");
@@ -102,7 +100,7 @@ class server{
 
                 while (numSent < numPackets){
                   if (empty)
-                    sendStandard(ds);
+                    sendStandard();
                   else
                     sendMissing();
 
@@ -132,7 +130,7 @@ class server{
       //ds.send(packetArray[indexToSend]);
     }
 
-    public static void sendStandard(DatagramSocket ds){
+    public static void sendStandard(){
       int count = 0;
 
       try{
@@ -164,10 +162,6 @@ class server{
           bytesSent += 1024;
           numSent++;
           count++;
-
-          if(numSent > numPackets){
-            break;
-          }
         }
       }
       catch(IOException e){
@@ -177,14 +171,16 @@ class server{
     }
 
 
-
     public static ArrayList<Integer> getAck() throws IOException{
       int count = 0;
       ArrayList<Integer> ackArray = new ArrayList<>();
       while (count < 5){
-        DatagramPacket tempPacket = new DatagramPacket(new byte[1024], 1024);
+        DatagramPacket tempPacket = new DatagramPacket(new byte[3], 3);
         try{
+          ds.setSoTimeout(TIMEOUT);
           ds.receive(tempPacket);
+          System.out.println("received ack");
+
           String tempString = new String(tempPacket.getData());
           tempString = tempString.trim();
           int tempNum = Integer.parseInt(tempString);
@@ -193,6 +189,9 @@ class server{
         catch(SocketTimeoutException e){
           System.out.println("timed out");
         }
+        if(numPackets == ackArray.size())
+          break;
+        count++;
       }
       return ackArray;
     }
