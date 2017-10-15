@@ -34,7 +34,7 @@ class server{
             Console cons = System.console();
 
             ds = c.socket();
-            
+
 
             //Check for valid port number
             try{
@@ -175,19 +175,22 @@ class server{
       int count = 0;
       ArrayList<Integer> ackArray = new ArrayList<>();
       while (count < 5){
-        DatagramPacket tempPacket = new DatagramPacket(new byte[3], 3);
+        DatagramPacket tempPacket = new DatagramPacket(new byte[1024], 1024);
         try{
           ds.setSoTimeout(TIMEOUT);
           ds.receive(tempPacket);
-          System.out.println("received ack");
+          //System.out.println("received ack");
 
           String tempString = new String(tempPacket.getData());
           tempString = tempString.trim();
           int tempNum = Integer.parseInt(tempString);
+          System.out.println("received ack: " + tempNum);
+
           ackArray.add(tempNum);
         }
         catch(SocketTimeoutException e){
           System.out.println("timed out");
+          break;
         }
         if(numPackets == ackArray.size())
           break;
