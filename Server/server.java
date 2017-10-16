@@ -14,7 +14,7 @@ import java.util.*;
  * */
 
 class server{
-    private static final int TIMEOUT = 3000;
+    private static final int TIMEOUT = 100;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
@@ -24,6 +24,7 @@ class server{
     public static DatagramPacket[] packetArray;
     public static FileInputStream fis;
     public static BufferedInputStream bis;
+    public static int repeat = 0;
 
     public static void main(String args[]){
 
@@ -98,7 +99,7 @@ class server{
                 numSent = 0;
                 boolean empty = true;
 
-                while (numSent < numPackets){
+                while (numSent <= numPackets && repeat < 3){
                   if (empty)
                     sendStandard();
                   else
@@ -110,6 +111,7 @@ class server{
                   empty = isEmpty(packetArray);
 
                 }
+                System.out.println("File sent!");
               }
 
             }
@@ -125,6 +127,7 @@ class server{
         if (packetArray[i] != null){
           indexToSend = i;
           ds.send(packetArray[indexToSend]);
+          System.out.println("Lost packet sent: " + indexToSend);
         }
       }
       //ds.send(packetArray[indexToSend]);
@@ -155,8 +158,17 @@ class server{
           bis.read(sendBytes, 3, bytesToSend);
 
           DatagramPacket d = new DatagramPacket(sendBytes, bytesToSend+3, client);
+          Random r = new Random();
+          int ranNum = r.nextInt(100);
+
           ds.send(d);
-          System.out.println("Packet sent.");
+
+          // if (ranNum < 10){
+          //   ds.send(d);
+          //   System.out.println("Packet sent: " + tempNumSent);
+          // }
+
+          System.out.println("Packet sent: " + tempNumSent);
           packetArray[numSent] = d;
 
           bytesSent += 1024;
@@ -173,6 +185,7 @@ class server{
 
     public static ArrayList<Integer> getAck() throws IOException{
       int count = 0;
+
       ArrayList<Integer> ackArray = new ArrayList<>();
       while (count < 5){
         DatagramPacket tempPacket = new DatagramPacket(new byte[1024], 1024);
@@ -187,9 +200,12 @@ class server{
           System.out.println("received ack: " + tempNum);
 
           ackArray.add(tempNum);
+          repeat = 0;
+
         }
         catch(SocketTimeoutException e){
           System.out.println("timed out");
+          repeat++;
           break;
         }
         if(numPackets == ackArray.size())

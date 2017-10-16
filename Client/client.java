@@ -8,7 +8,7 @@ import static java.lang.Math.toIntExact;
 
 /**
  * UDP File Transfer Project
- * 
+ *
  * @author Dustin Thurston
  * @author Ryan Walt
  */
@@ -48,7 +48,7 @@ class client{
                 if(!validitycheck(ip)){
                     return;
                 }
-            
+
                 //Checks for valid port number
                 try{
                     port = Integer.parseInt(cons.readLine("Enter port number: "));
@@ -63,14 +63,14 @@ class client{
                 server = new InetSocketAddress(ip, port);
                 DatagramSocket ds = sc.socket();
 
-                
+
                 //Read file name from user and make sure it's not empty
                 String fileName = "";
                 while(fileName.equals("")){
                   fileName = cons.readLine("Enter command or file to send: ");
                   fileName = fileName.trim();
                 }
-                
+
                 //String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
                 ByteBuffer buffer;
@@ -120,7 +120,7 @@ class client{
                         }
                         break;
                 }
-            
+
         }catch(IOException e){
             System.out.println("An IO exception has occurred.");
             return;
@@ -166,7 +166,6 @@ class client{
             try{
                 DatagramPacket packet = new DatagramPacket(new byte[1027], 1027);
                 ds.receive(packet);
-                System.out.println("Packet Received");
                 packetArray.add(packet);
                 //packetsRecd ++;
                 byte[] data = packet.getData();
@@ -174,6 +173,8 @@ class client{
                 //USE THIS FOR GETTING SEQUENCE NUM FROM BYTE[]
                 int sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
                 seqNums.add(sequenceNum);
+                System.out.println("Packet Received: " + sequenceNum);
+
 
                 //If packet not already There, put data into filechannel
                 //else, otherwise, throws away packet and will resend ack
@@ -181,13 +182,23 @@ class client{
                     arrived[sequenceNum] = true;
 
                     int iterate = 0;
-                    while(!packetArray.isEmpty() && iterate < 5){
+                    while(!packetArray.isEmpty() && iterate < 10){
+                      for(int i = 0; i < packetArray.size(); i++){
+                          data = packetArray.get(i).getData();
+                          sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
+                          if(sequenceNum == lastRecd+1){
+                              index = i;
+                              break;
+                          }
+                      }
+
                         if(sequenceNum == lastRecd+1){
                             packetsRecd++;
                             lastRecd = sequenceNum;
                             fileBuff = ByteBuffer.allocate(packetArray.get(index).getLength()-3);
                             fileBuff = ByteBuffer.wrap(packetArray.get(index).getData(), 3, packetArray.get(index).getLength()-3);
                             fc.write(fileBuff);
+                            System.out.println("Packet written: " + sequenceNum);
                             packetArray.remove(index);
 
                             if(packetArray.isEmpty()){
@@ -195,13 +206,7 @@ class client{
                             }
                         }
 
-                        for(int i = 0; i < packetArray.size(); i++){
-                            data = packetArray.get(i).getData();
-                            sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
-                            if(sequenceNum == lastRecd+1){
-                                index = i;
-                            }
-                        }
+
                         iterate++;
                     }
 
