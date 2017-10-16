@@ -14,7 +14,7 @@ import java.util.*;
  * */
 
 class server{
-    private static final int TIMEOUT = 100;
+    private static final int TIMEOUT = 3000;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
@@ -102,9 +102,10 @@ class server{
                 while (numSent <= numPackets && repeat < 3){
                   if (empty)
                     sendStandard();
-                  else
+                  else{
                     sendMissing();
-
+                    repeat = 0;
+                  }
                   ArrayList<Integer> ackArray = getAck();
                   setNulls(ackArray, packetArray);
 
@@ -112,6 +113,7 @@ class server{
 
                 }
                 System.out.println("File sent!");
+                repeat = 0;
               }
 
             }
