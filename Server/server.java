@@ -25,6 +25,7 @@ class server{
     public static FileInputStream fis;
     public static BufferedInputStream bis;
     public static int repeat = 0;
+    public static String newType;
 
     public static void main(String args[]){
 
@@ -236,7 +237,7 @@ class server{
     public static File findFile(String type){
       File sendFile = null;
       File dir = new File(server.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-      String newType = type.trim();
+      newType = type.trim();
 
       File[] matches = dir.listFiles(new FilenameFilter() {
         public boolean accept(File dir, String name) {

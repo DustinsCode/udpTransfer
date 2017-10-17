@@ -3,7 +3,6 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
-import static java.lang.Math.toIntExact;
 
 
 /**
@@ -112,7 +111,7 @@ class client{
                                 //print out value for testing
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, toIntExact(numPackets), server);
+                                receive(ds, fileName, (int)(numPackets), server);
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
