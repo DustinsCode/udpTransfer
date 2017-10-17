@@ -209,6 +209,8 @@ class client{
 
                         iterate++;
                     }
+                }else{
+                    packetArray.remove(packetArray.size()-1);
                 }
                 //send acknowledgments
                 while(!seqNums.isEmpty()){
