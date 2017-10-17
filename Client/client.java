@@ -183,6 +183,7 @@ class client{
 
                     int iterate = 0;
                     while(!packetArray.isEmpty() && iterate < 10){
+
                       for(int i = 0; i < packetArray.size(); i++){
                           data = packetArray.get(i).getData();
                           sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
@@ -209,12 +210,11 @@ class client{
 
                         iterate++;
                     }
-
-                    //send acknowledgments
-                    while(!seqNums.isEmpty()){
-                        sendAck(ds, seqNums.get(0), server);
-                        seqNums.remove(0);
-                    }
+                }
+                //send acknowledgments
+                while(!seqNums.isEmpty()){
+                    sendAck(ds, seqNums.get(0), server);
+                    seqNums.remove(0);
                 }
             }catch(SocketTimeoutException ste){
                 System.out.println("Receive Timed Out");
