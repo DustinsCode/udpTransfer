@@ -59,6 +59,54 @@ class server{
 
               //Buffer for the name of the file requested by the client.
               ByteBuffer fileNameBuf = ByteBuffer.allocate(1024);
+
+			  //testing
+
+			  ds.setSoTimeout(3000);
+
+			  DatagramPacket namePacket = new DatagramPacket(new byte[1024], 1024);
+			  File clientFile;
+
+			  while(true){
+				  try{
+					  ds.receive(namePacket);
+					  client = namePacket.getSocketAddress();
+					  String fileName = new String(namePacket.getData());
+		              fileName = fileName.trim();
+					  fileName = fileName.substring(1,fileName.length());
+
+					  //Search for the file in the directory of the server.
+		              clientFile = findFile(fileName);
+
+					  //TODO: change this so that it sends a packet
+					  if (clientFile == null){
+			                System.out.println("File not found on the server.");
+			                ByteBuffer errorBuf = ByteBuffer.wrap("filenotfound".getBytes());
+							c.send(errorBuf, client);
+					  }else{
+						  fileSize = (int)clientFile.length();
+		                  //Get the total number of packets to send to the client.
+
+		                  if (fileSize % 1024 == 0)
+		                    numPackets = fileSize / 1024;
+		                  else
+		                    numPackets = (fileSize / 1024) + 1;
+
+		                  String tempPacketString = numPackets + "";
+		                  //ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
+						  DatagramPacket sizePacket = new DatagramPacket(tempPacketString.getBytes(), tempPacketString.getBytes().length, client);
+		                  ds.send(sizePacket);
+					  }
+
+
+					  break;
+				  }catch(SocketTimeoutException ste){
+					  //System.out.println("Timed out on file request");
+				  }
+			  }
+			  //testing
+
+/****************
               client = c.receive(fileNameBuf);
               String fileName = new String(fileNameBuf.array());
               fileName = fileName.trim();
@@ -68,12 +116,14 @@ class server{
               //Search for the file in the directory of the server.
               File clientFile = findFile(fileName);
 
+
               if (clientFile == null){
                 System.out.println("File not found on the server.");
                 ByteBuffer errorBuf = ByteBuffer.wrap("filenotfound".getBytes());
                 c.send(errorBuf, client);
               }
-              else{
+
+              if(clientFile != null){
                 //Get the size of the file
                 fileSize = (int)clientFile.length();
                 //Get the total number of packets to send to the client.
@@ -86,7 +136,7 @@ class server{
                 String tempPacketString = numPackets + "";
                 ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
                 c.send(numPacketsBuf, client);
-
+**************/
                 packetBoolArray = new boolean[numPackets];
                 Arrays.fill(packetBoolArray, false);
                 packetArray = new DatagramPacket[numPackets];
@@ -114,7 +164,7 @@ class server{
                 }
                 System.out.println("File sent!");
                 repeat = 0;
-              }
+              //}
 
             }
         }catch(IOException e){
