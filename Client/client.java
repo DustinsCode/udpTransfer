@@ -3,6 +3,9 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
+import java.nio.file.Path;
+import java.io.File;
+
 
 
 /**
@@ -69,6 +72,8 @@ class client{
                   fileName = cons.readLine("Enter command or file to send: ");
                   fileName = fileName.trim();
                 }
+                //Remove the file if it already exists
+                deleteFile(fileName);
 
                 //String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
@@ -256,5 +261,13 @@ class client{
             System.out.println("Invalid IP address. Closing program..");
             return false;
         }
+    }
+
+    public static void deleteFile(String name){
+      File dir = new File(client.class.getProtectionDomain().getCodeSource().getLocation().getPath() + name);
+      if (dir.delete())
+        System.out.println("File removed.");
+
+
     }
 }
