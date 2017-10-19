@@ -3,7 +3,9 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
-import static java.lang.Math.toIntExact;
+import java.nio.file.Path;
+import java.io.File;
+
 
 
 /**
@@ -70,6 +72,8 @@ class client{
                   fileName = cons.readLine("Enter command or file to send: ");
                   fileName = fileName.trim();
                 }
+                //Remove the file if it already exists
+                deleteFile(fileName);
 
                 //String message;
                 ByteBuffer buff = ByteBuffer.allocate(1024);
@@ -130,7 +134,7 @@ class client{
                                 //print out value for testing
                                 long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, toIntExact(numPackets), server);
+                                receive(ds, fileName, (int)(numPackets), server);
 
                             }catch(NumberFormatException nfe){
                                 System.out.println("NumberFormatException occurred");
@@ -201,6 +205,7 @@ class client{
 
                     int iterate = 0;
                     while(!packetArray.isEmpty() && iterate < 10){
+
                       for(int i = 0; i < packetArray.size(); i++){
                           data = packetArray.get(i).getData();
                           sequenceNum = ((data[0] & 0xFF)<<16) +((data[1] & 0xFF)<<8) + (data[2] & 0xFF);
@@ -227,12 +232,13 @@ class client{
 
                         iterate++;
                     }
-
-                    //send acknowledgments
-                    while(!seqNums.isEmpty()){
-                        sendAck(ds, seqNums.get(0), server);
-                        seqNums.remove(0);
-                    }
+                }else{
+                    packetArray.remove(packetArray.size()-1);
+                }
+                //send acknowledgments
+                while(!seqNums.isEmpty()){
+                    sendAck(ds, seqNums.get(0), server);
+                    seqNums.remove(0);
                 }
             }catch(SocketTimeoutException ste){
                 System.out.println("Receive Timed Out");
@@ -273,5 +279,13 @@ class client{
             System.out.println("Invalid IP address. Closing program..");
             return false;
         }
+    }
+
+    public static void deleteFile(String name){
+      File dir = new File(client.class.getProtectionDomain().getCodeSource().getLocation().getPath() + name);
+      if (dir.delete())
+        System.out.println("File removed.");
+
+
     }
 }

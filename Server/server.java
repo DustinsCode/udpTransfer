@@ -24,7 +24,7 @@ class server{
     public static DatagramPacket[] packetArray;
     public static FileInputStream fis;
     public static BufferedInputStream bis;
-    public static int repeat = 0;
+    public static String newType;
 
     public static void main(String args[]){
 
@@ -149,12 +149,11 @@ class server{
                 numSent = 0;
                 boolean empty = true;
 
-                while (numSent <= numPackets && repeat < 3){
+                while (numSent < numPackets){
                   if (empty)
                     sendStandard();
                   else{
                     sendMissing();
-                    repeat = 0;
                   }
                   ArrayList<Integer> ackArray = getAck();
                   setNulls(ackArray, packetArray);
@@ -163,8 +162,12 @@ class server{
 
                 }
                 System.out.println("File sent!");
+<<<<<<< HEAD
                 repeat = 0;
               //}
+=======
+              }
+>>>>>>> refs/remotes/origin/master
 
             }
         }catch(IOException e){
@@ -252,12 +255,10 @@ class server{
           System.out.println("received ack: " + tempNum);
 
           ackArray.add(tempNum);
-          repeat = 0;
 
         }
         catch(SocketTimeoutException e){
           System.out.println("timed out");
-          repeat++;
           break;
         }
         if(numPackets == ackArray.size())
@@ -286,7 +287,7 @@ class server{
     public static File findFile(String type){
       File sendFile = null;
       File dir = new File(server.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-      String newType = type.trim();
+      newType = type.trim();
 
       File[] matches = dir.listFiles(new FilenameFilter() {
         public boolean accept(File dir, String name) {
