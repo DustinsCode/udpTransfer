@@ -163,7 +163,7 @@ class server{
                 }
                 System.out.println("File sent!");
               }
-            }
+           // }
         }catch(IOException e){
             System.out.println("Got an io exception ya dingus");
 
