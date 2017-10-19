@@ -79,8 +79,10 @@ class client{
                 ByteBuffer buff = ByteBuffer.allocate(1024);
                 ByteBuffer buffer;
                 switch(fileName){
+
                     case "exit":
-                        buffer = ByteBuffer.wrap(fileName.getBytes());
+						//TODO: Change to send packet instead of buffer.
+						buffer = ByteBuffer.wrap(fileName.getBytes());
                         sc.send(buffer, server);
                         return;
                     default:
@@ -91,12 +93,28 @@ class client{
                             break;
                         }
 
-                        buffer = ByteBuffer.wrap(fileName.getBytes());
-                        sc.send(buffer, server);
-                        System.out.println("Sent file name");
+                        //testing
 
-                        sc.receive(buff);
-                        String code = new String(buff.array());
+                        DatagramPacket namePacket = new DatagramPacket(fileName.getBytes(), fileName.getBytes().length, server);
+						DatagramPacket sizePacket = new DatagramPacket(new byte[1024], 1024);
+
+                        //testing
+                        //buffer = ByteBuffer.wrap(fileName.getBytes());
+                        //sc.send(buffer, server);
+						ds.setSoTimeout(TIMEOUT);
+                        while(true){
+							try{
+                        		ds.send(namePacket);
+                        		System.out.println("Sent file name");
+								ds.receive(sizePacket);
+								
+								break;
+							}catch(SocketTimeoutException ste){
+								System.out.println("Timed out");
+							}
+                        }
+                        //sc.receive(buff);
+                        String code = new String(sizePacket.getData());
                         code = code.trim();
                         System.out.println(code);
 
