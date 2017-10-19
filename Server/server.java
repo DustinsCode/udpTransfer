@@ -162,13 +162,7 @@ class server{
 
                 }
                 System.out.println("File sent!");
-<<<<<<< HEAD
-                repeat = 0;
-              //}
-=======
               }
->>>>>>> refs/remotes/origin/master
-
             }
         }catch(IOException e){
             System.out.println("Got an io exception ya dingus");
