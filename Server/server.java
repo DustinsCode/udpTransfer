@@ -25,6 +25,7 @@ class server{
     public static FileInputStream fis;
     public static BufferedInputStream bis;
     public static String newType;
+    public static int tempNumSent2;
 
     public static void main(String args[]){
 
@@ -174,7 +175,7 @@ class server{
           if(bytesToSend < 0){
             break;
           }
-          int tempNumSent = numSent;
+          int tempNumSent = tempNumSent2;
           byte[] sendBytes = new byte[bytesToSend + 3];
           byte b3 = (byte)(tempNumSent & 0xFF);
           byte b2 = (byte)((tempNumSent >> 8) & 0xFF);
@@ -190,14 +191,14 @@ class server{
           int ranNum = r.nextInt(100);
 
           ds.send(d);
-
+          tempNumSent2++;
           // if (ranNum < 10){
           //   ds.send(d);
           //   System.out.println("Packet sent: " + tempNumSent);
           // }
 
           System.out.println("Packet sent: " + tempNumSent);
-          packetArray[numSent + count] = d;
+          packetArray[tempNumSent2] = d;
 
           bytesSent += 1024;
           count++;
