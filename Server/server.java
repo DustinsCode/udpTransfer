@@ -94,6 +94,20 @@ class server{
                             //ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
                             DatagramPacket sizePacket = new DatagramPacket(tempPacketString.getBytes(), tempPacketString.getBytes().length, client);
                             ds.send(sizePacket);
+                            while(true){
+                                try{
+                                    DatagramPacket test = new DatagramPacket(new byte[1024], 1024);
+                                    ds.setSoTimeout(1000);
+                                    ds.receive(test);
+                                    String sendAgain = new String(test.getData());
+                                    sendAgain = sendAgain.trim();
+                                    if(sendAgain.equals("needNewSize"){
+                                        ds.send(sizePacket());
+                                    }
+                                }catch(SocketTimeoutException){
+                                    break;
+                                }
+                            }
                         }
 
 

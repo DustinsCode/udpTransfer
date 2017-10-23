@@ -111,33 +111,38 @@ class client{
 							}
                         }
                         //sc.receive(buff);
-                        String code = new String(sizePacket.getData());
-                        code = code.trim();
-                        System.out.println(code);
+                        while(true){
+                            String code = new String(sizePacket.getData());
+                            code = code.trim();
+                            System.out.println(code);
 
-                        if(code.equals("error")){
-                            System.out.println("There was an error retrieving the file");
-                        }else if(code.equals("filenotfound")){
-                            System.out.println("The file was not found.");
-                        }else{
-                            try{
-                                //Receive amount of packets to expect
-                                //buffer = ByteBuffer.allocate(1024);
-                                //sc.receive(buffer);
-                                //System.out.println("Packet Received");
-                                //String sizeString = new String(buffer.array());
-                                String sizeString = code;
+                            if(code.equals("error")){
+                                System.out.println("There was an error retrieving the file");
+                            }else if(code.equals("filenotfound")){
+                                System.out.println("The file was not found.");
+                            }else{
+                                try{
+                                    //Receive amount of packets to expect
+                                    //buffer = ByteBuffer.allocate(1024);
+                                    //sc.receive(buffer);
+                                    //System.out.println("Packet Received");
+                                    //String sizeString = new String(buffer.array());
+                                    String sizeString = code;
 
-                                //print out value for testing
-                                long numPackets = Long.valueOf(sizeString).longValue();
+                                    //print out value for testing
+                                    long numPackets = Long.valueOf(sizeString).longValue();
 
-                                receive(ds, fileName, (int)(numPackets), server);
-
-                            }catch(NumberFormatException nfe){
-                                System.out.println("NumberFormatException occurred");
+                                    receive(ds, fileName, (int)(numPackets), server);
+                                    break;
+                                }catch(NumberFormatException nfe){
+                                    System.out.println("Error getting number of packets");
+                                    String refresh = "needNewSize";
+                                    ds.send(new DatagramPacket(refresh.getBytes(),refresh.length(), server));
+                                    ds.receive(sizePacket);
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
                 }
 
         }catch(IOException e){
