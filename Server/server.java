@@ -164,7 +164,7 @@ class server{
 
     public static void sendStandard(){
       int count = 0;
-
+      tempNumSent2 = numSent;
       try{
         while (count < 5){
           if (fileSize - bytesSent < 1024)
