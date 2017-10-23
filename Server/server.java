@@ -60,20 +60,22 @@ class server{
               //Buffer for the name of the file requested by the client.
               ByteBuffer fileNameBuf = ByteBuffer.allocate(1024);
 
-			  //testing
-
 			  ds.setSoTimeout(3000);
 
 			  DatagramPacket namePacket = new DatagramPacket(new byte[1024], 1024);
-			  File clientFile;
+			  File clientFile = null;
 
-			  while(true){
+              //Handle fileName/numPackets packet loss
+              boolean ackRecd = false;
+              boolean ackSent = false;
+			  while(!ackRecd && !ackSent){
 				  try{
 					  ds.receive(namePacket);
 					  client = namePacket.getSocketAddress();
 					  String fileName = new String(namePacket.getData());
 		              fileName = fileName.trim();
 					  fileName = fileName.substring(1,fileName.length());
+                      System.out.println("Clinet wants: " + fileName);
 
 					  //Search for the file in the directory of the server.
 		              clientFile = findFile(fileName);
@@ -81,8 +83,8 @@ class server{
 					  //TODO: change this so that it sends a packet
 					  if (clientFile == null){
 			                System.out.println("File not found on the server.");
-			                ByteBuffer errorBuf = ByteBuffer.wrap("filenotfound".getBytes());
-							c.send(errorBuf, client);
+			                DatagramPacket error = new DatagramPacket("filenotfound".getBytes(), 12,client);
+							ds.send(error);
 					  }else{
 						  fileSize = (int)clientFile.length();
 		                  //Get the total number of packets to send to the client.
@@ -93,9 +95,21 @@ class server{
 		                    numPackets = (fileSize / 1024) + 1;
 
 		                  String tempPacketString = numPackets + "";
-		                  //ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
 						  DatagramPacket sizePacket = new DatagramPacket(tempPacketString.getBytes(), tempPacketString.getBytes().length, client);
 		                  ds.send(sizePacket);
+                          sizePacket = new DatagramPacket(new byte[1024], 1024);
+                          ds.receive(sizePacket);
+                          String ack = new String(sizePacket.getData());
+                          System.out.println("Recieved ack1");
+                          ack = ack.trim();
+                          if(!ack.equals(tempPacketString)){
+                              throw new SocketTimeoutException();
+                          }else{
+                              ackRecd = true;
+                          }
+                          ds.send(sizePacket);
+                          System.out.println("Sent ack2");
+                          ackSent = true;
 					  }
 
 
@@ -104,39 +118,6 @@ class server{
 					  //System.out.println("Timed out on file request");
 				  }
 			  }
-			  //testing
-
-/****************
-              client = c.receive(fileNameBuf);
-              String fileName = new String(fileNameBuf.array());
-              fileName = fileName.trim();
-              System.out.println("Client wants: " + fileName);
-              fileName = fileName.substring(1,fileName.length());
-
-              //Search for the file in the directory of the server.
-              File clientFile = findFile(fileName);
-
-
-              if (clientFile == null){
-                System.out.println("File not found on the server.");
-                ByteBuffer errorBuf = ByteBuffer.wrap("filenotfound".getBytes());
-                c.send(errorBuf, client);
-              }
-
-              if(clientFile != null){
-                //Get the size of the file
-                fileSize = (int)clientFile.length();
-                //Get the total number of packets to send to the client.
-
-                if (fileSize % 1024 == 0)
-                  numPackets = fileSize / 1024;
-                else
-                  numPackets = (fileSize / 1024) + 1;
-
-                String tempPacketString = numPackets + "";
-                ByteBuffer numPacketsBuf = ByteBuffer.wrap(tempPacketString.getBytes());
-                c.send(numPacketsBuf, client);
-**************/
                 packetBoolArray = new boolean[numPackets];
                 Arrays.fill(packetBoolArray, false);
                 packetArray = new DatagramPacket[numPackets];
@@ -163,7 +144,6 @@ class server{
                 }
                 System.out.println("File sent!");
               }
-           // }
         }catch(IOException e){
             System.out.println("Got an io exception ya dingus");
 
@@ -179,7 +159,6 @@ class server{
           System.out.println("Lost packet sent: " + indexToSend);
         }
       }
-      //ds.send(packetArray[indexToSend]);
     }
 
     public static void sendStandard(){

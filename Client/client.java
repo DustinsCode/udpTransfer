@@ -93,27 +93,28 @@ class client{
                             break;
                         }
 
-                        //testing
 
                         DatagramPacket namePacket = new DatagramPacket(fileName.getBytes(), fileName.getBytes().length, server);
 						DatagramPacket sizePacket = new DatagramPacket(new byte[1024], 1024);
 
-                        //testing
-                        //buffer = ByteBuffer.wrap(fileName.getBytes());
-                        //sc.send(buffer, server);
+                        //Handle packet loss when sending the name of the file
 						ds.setSoTimeout(TIMEOUT);
-                        while(true){
+                        boolean ackSent = false;
+                        boolean ackRecd = false;
+                        while(!ackSent && !ackRecd){
 							try{
                         		ds.send(namePacket);
                         		System.out.println("Sent file name");
 								ds.receive(sizePacket);
-								
+								ds.send(sizePacket);
+                                ackSent = true;
+                                ds.receive(sizePacket);
+                                ackRecd = true;
 								break;
 							}catch(SocketTimeoutException ste){
 								System.out.println("Timed out");
 							}
                         }
-                        //sc.receive(buff);
                         String code = new String(sizePacket.getData());
                         code = code.trim();
                         System.out.println(code);
@@ -124,11 +125,7 @@ class client{
                             System.out.println("The file was not found.");
                         }else{
                             try{
-                                //Receive amount of packets to expect
-                                //buffer = ByteBuffer.allocate(1024);
-                                //sc.receive(buffer);
-                                //System.out.println("Packet Received");
-                                //String sizeString = new String(buffer.array());
+
                                 String sizeString = code;
 
                                 //print out value for testing
@@ -142,7 +139,6 @@ class client{
                         }
                         break;
                 }
-
         }catch(IOException e){
             System.out.println("An IO exception has occurred.");
             return;
@@ -285,7 +281,5 @@ class client{
       File dir = new File(client.class.getProtectionDomain().getCodeSource().getLocation().getPath() + name);
       if (dir.delete())
         System.out.println("File removed.");
-
-
     }
 }
