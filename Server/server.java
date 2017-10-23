@@ -14,7 +14,7 @@ import java.util.*;
  * */
 
 class server{
-    private static final int TIMEOUT = 500;
+    private static final int TIMEOUT = 200;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
@@ -200,7 +200,6 @@ class server{
           packetArray[numSent] = d;
 
           bytesSent += 1024;
-          numSent++;
           count++;
         }
       }
@@ -221,7 +220,7 @@ class server{
           ds.setSoTimeout(TIMEOUT);
           ds.receive(tempPacket);
           //System.out.println("received ack");
-
+	  numSent++;
           String tempString = new String(tempPacket.getData());
           tempString = tempString.trim();
           int tempNum = Integer.parseInt(tempString);

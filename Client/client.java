@@ -17,7 +17,7 @@ import java.io.File;
 class client{
 
     //private static final int SWS = 5;
-    private static final int TIMEOUT = 500;
+    private static final int TIMEOUT = 200;
 
     public static void main(String[] args){
         String ip = "";
