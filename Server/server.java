@@ -170,7 +170,7 @@ class server{
           bytesToSend = fileSize - bytesSent;
           else
           bytesToSend = 1024;
-		
+
           if(bytesToSend < 0){
             break;
           }
@@ -197,11 +197,10 @@ class server{
           // }
 
           System.out.println("Packet sent: " + tempNumSent);
-          packetArray[numSent] = d;
+          packetArray[numSent + count] = d;
 
           bytesSent += 1024;
           count++;
-	  numSent++;
         }
       }
       catch(IOException e){
@@ -220,6 +219,7 @@ class server{
         try{
           ds.setSoTimeout(TIMEOUT);
           ds.receive(tempPacket);
+          numSent++;
           //System.out.println("received ack");
           String tempString = new String(tempPacket.getData());
           tempString = tempString.trim();
