@@ -131,7 +131,8 @@ class server{
                 numSent = 0;
                 boolean empty = true;
 
-                while (numSent < numPackets){
+                while (numSent < numPackets && !empty){
+
                   if (empty)
                     sendStandard();
                   else{
@@ -164,7 +165,7 @@ class server{
 
     public static void sendStandard(){
       int count = 0;
-      tempNumSent2 = numSent;
+
       try{
         while (count < 5){
           if (fileSize - bytesSent < 1024)
@@ -175,7 +176,7 @@ class server{
           if(bytesToSend < 0){
             break;
           }
-          int tempNumSent = tempNumSent2;
+          int tempNumSent = numPackets;
           byte[] sendBytes = new byte[bytesToSend + 3];
           byte b3 = (byte)(tempNumSent & 0xFF);
           byte b2 = (byte)((tempNumSent >> 8) & 0xFF);
@@ -191,14 +192,14 @@ class server{
           int ranNum = r.nextInt(100);
 
           ds.send(d);
-          tempNumSent2++;
+          numSent++;
           // if (ranNum < 10){
           //   ds.send(d);
           //   System.out.println("Packet sent: " + tempNumSent);
           // }
 
           System.out.println("Packet sent: " + tempNumSent);
-          packetArray[tempNumSent2] = d;
+          packetArray[numSent] = d;
 
           bytesSent += 1024;
           count++;
@@ -220,7 +221,7 @@ class server{
         try{
           ds.setSoTimeout(TIMEOUT);
           ds.receive(tempPacket);
-          numSent++;
+
           //System.out.println("received ack");
           String tempString = new String(tempPacket.getData());
           tempString = tempString.trim();
