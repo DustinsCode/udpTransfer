@@ -17,7 +17,7 @@ import java.io.File;
 class client{
 
     //private static final int SWS = 5;
-    private static final int TIMEOUT = 3000;
+    private static final int TIMEOUT = 100;
 
     public static void main(String[] args){
         String ip = "";
@@ -93,12 +93,9 @@ class client{
                             break;
                         }
 
-                        //testing
-
                         DatagramPacket namePacket = new DatagramPacket(fileName.getBytes(), fileName.getBytes().length, server);
 						DatagramPacket sizePacket = new DatagramPacket(new byte[1024], 1024);
 
-                        //testing
                         //buffer = ByteBuffer.wrap(fileName.getBytes());
                         //sc.send(buffer, server);
 						ds.setSoTimeout(TIMEOUT);
@@ -107,7 +104,7 @@ class client{
                         		ds.send(namePacket);
                         		System.out.println("Sent file name");
 								ds.receive(sizePacket);
-								
+
 								break;
 							}catch(SocketTimeoutException ste){
 								System.out.println("Timed out");
