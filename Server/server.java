@@ -149,7 +149,7 @@ class server{
                 numSent = 0;
                 boolean empty = true;
 
-                while (numSent < numPackets){
+                while (numSent <= numPackets){
                   if (empty)
                     sendStandard();
                   else{
