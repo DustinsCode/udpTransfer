@@ -14,7 +14,7 @@ import java.util.*;
  * */
 
 class server{
-    private static final int TIMEOUT = 3000;
+    private static final int TIMEOUT = 500;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
