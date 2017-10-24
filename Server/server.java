@@ -104,6 +104,7 @@ class server{
                                     if(sendAgain.equals("needNewSize")){
                                         ds.send(sizePacket);
                                     }
+                                    break;
                                 }catch(SocketTimeoutException ste){
                                     ds.setSoTimeout(TIMEOUT);
                                     break;
