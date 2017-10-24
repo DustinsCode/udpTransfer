@@ -101,7 +101,7 @@ class server{
                                     ds.receive(test);
                                     String sendAgain = new String(test.getData());
                                     sendAgain = sendAgain.trim();
-                                    if(sendAgain.equals("needNewSize"){
+                                    if(sendAgain.equals("needNewSize")){
                                         ds.send(sizePacket());
                                     }
                                 }catch(SocketTimeoutException ste){
