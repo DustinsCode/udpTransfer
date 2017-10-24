@@ -15,7 +15,7 @@ import java.util.zip.CRC32;
 * */
 
 class server{
-    private static final int TIMEOUT = 3000;
+    private static final int TIMEOUT = 100;
     public static SocketAddress client = null;
     public static DatagramChannel c;
     public static DatagramSocket ds;
