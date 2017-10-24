@@ -16,7 +16,7 @@ import java.util.zip.CRC32;
  class client{
 
      //private static final int SWS = 5;
-     private static final int TIMEOUT = 3000;
+     private static final int TIMEOUT = 100;
      public static CRC32 crc = new CRC32();
 
      public static void main(String[] args){
